@@ -6,10 +6,10 @@ const canvas = document.getElementById("jsCanvas"),
     saveBtn = document.getElementById("jsSave");
 
 const INITIAL_COLOR = "#2c2c2c";
+const INITIAL_LINE_WIDTH = 10;
 
-// initializing canvas from CSS
-canvas.width = parseInt(getComputedStyle(canvas).width);
-canvas.height = parseInt(getComputedStyle(canvas).height);
+const scaleX = canvas.width / canvas.offsetWidth;
+const scaleY = canvas.height / canvas.offsetHeight;
 
 // initializing background of canvas
 ctx.fillStyle = "white";
@@ -18,7 +18,7 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 // initializing 2d context of canvas
 ctx.strokeStyle = INITIAL_COLOR;
 ctx.fillStyle = INITIAL_COLOR;
-ctx.lineWidth = 2.5;
+ctx.lineWidth = INITIAL_LINE_WIDTH;
 
 let painting = false,
     filling = false;
@@ -32,8 +32,8 @@ function startPainting() {
 }
 
 function onMouseMove(event) {
-    const x = event.offsetX,
-        y = event.offsetY;
+    const x = event.offsetX * scaleX,
+        y = (event.offsetY + 24) * scaleY;
     if (!painting) {
         ctx.beginPath();
         ctx.moveTo(x, y);
@@ -54,16 +54,24 @@ function canvasClick(event) {
 }
 
 function changeColor(event) {
-    const targetColor = event.target.style.backgroundColor
+    Array.from(event.target.parentNode.childNodes).forEach(node => {
+        if (node.classList) {
+            node.classList.remove("controls__color__now");
+        }
+    });
+    event.target.classList.add("controls__color__now");
+    const targetColor = event.target.style.backgroundColor;
     ctx.strokeStyle = targetColor;
     ctx.fillStyle = targetColor;
 }
 
 function changeMode() {
     if (filling) {
+        canvas.style.cursor = 'url("./images/brush.png"), auto';
         filling = false;
         mode.innerText = "fill";
     } else {
+        canvas.style.cursor = 'url("./images/bucket.png"), auto';
         filling = true;
         mode.innerText = "paint";
     }
@@ -82,7 +90,7 @@ function init() {
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("mousedown", canvasClick);
     document.addEventListener("mouseup", stopPainting);
-    canvas.addEventListener("mouseenter", event => ctx.moveTo(event.offsetX, event.offsetY));
+    canvas.addEventListener("mouseenter", event => ctx.moveTo(event.offsetX * scaleX, (event.offsetY + 24) * scaleY));
     canvas.addEventListener("contextmenu", event => event.preventDefault());
     colors.forEach(color => color.addEventListener("click", changeColor));
     range.addEventListener("input", event => ctx.lineWidth = event.target.value);
